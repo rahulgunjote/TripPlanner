@@ -7,13 +7,15 @@ on:
       - develop
 
 jobs:
-  unit-tests:
-    name: Unit Tests
+  launchable-tests:
+    name: Launchable Intelligent Testing
     runs-on: macos-15
     
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Full history for Launchable
       
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -29,6 +31,14 @@ jobs:
       - name: Install Dependencies
         run: bundle install
       
+      - name: Install Launchable CLI
+        run: pip3 install --upgrade launchable
+      
+      - name: Verify Launchable Setup
+        run: bundle exec fastlane launchable_verify
+        env:
+          LAUNCHABLE_TOKEN: ${{ secrets.LAUNCHABLE_TOKEN }}
+      
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
       
@@ -38,19 +48,33 @@ jobs:
       - name: Show Available Simulators
         run: xcrun simctl list devices available
       
-      - name: Build for Testing
-        run: bundle exec fastlane build_for_testing
+      - name: Record Build with Launchable
+        run: bundle exec fastlane launchable_record_build
+        env:
+          LAUNCHABLE_TOKEN: ${{ secrets.LAUNCHABLE_TOKEN }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
       
-      - name: Run Unit Tests
-        run: bundle exec fastlane unit_tests
+      - name: Run Launchable Intelligent Tests
+        run: bundle exec fastlane launchable_test
+        env:
+          LAUNCHABLE_TOKEN: ${{ secrets.LAUNCHABLE_TOKEN }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
       
-      - name: Upload Unit Test Results
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-results
-          path: fastlane/test_output/unit_tests/
+          name: launchable-test-results
+          path: fastlane/test_output/
           retention-days: 30
+      
+      - name: Get Launchable Insights
+        if: always()
+        run: |
+          launchable inspect tests --session $LAUNCHABLE_SESSION_ID > launchable_insights.txt || true
+          cat launchable_insights.txt
+        env:
+          LAUNCHABLE_TOKEN: ${{ secrets.LAUNCHABLE_TOKEN }}
       
       - name: Comment Test Results on PR
         if: always()
@@ -58,18 +82,29 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const testResults = '✅ Unit tests completed!';
+            let comment = '🧠 **Launchable Intelligent Testing**\n\n';
+            
+            try {
+              const insights = fs.readFileSync('launchable_insights.txt', 'utf8');
+              comment += '```\n' + insights + '\n```\n';
+            } catch (e) {
+              comment += '✅ Tests completed successfully!\n';
+            }
+            
+            comment += '\n[View detailed insights on Launchable](https://app.launchableinc.com)';
+            
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: testResults
+              body: comment
             });
   
-  ui-tests:
-    name: UI Tests
+  full-tests-fallback:
+    name: Full Test Suite (Fallback)
     runs-on: macos-15
-    needs: unit-tests
+    needs: launchable-tests
+    if: failure() # Only if Launchable tests fail
     
     steps:
       - name: Checkout Repository

@@ -1,0 +1,62 @@
+# Launchable Configuration for TripPlanner
+# https://www.launchableinc.com/docs
+
+version: 1
+
+# Test framework configuration
+test_framework: xcode
+
+# Project settings
+project:
+  name: TripPlanner
+  scheme: TripPlanner
+  project_file: TripPlanner.xcodeproj
+
+# Test targets
+test_targets:
+  - TripPlannerTests
+  - TripPlannerUITests
+
+# Subset configuration
+subset:
+  # Target test time (in seconds) for subset selection
+  # Launchable will try to select tests that run in approximately this time
+  target: 180  # 3 minutes
+  
+  # Confidence level for subset selection
+  # Higher confidence = more tests selected (safer but slower)
+  confidence: 90
+  
+  # Fallback to full suite if subset selection fails
+  fallback: full
+
+# Session settings
+session:
+  # Track flaky tests
+  track_flaky_tests: true
+  
+  # Session timeout
+  timeout: 3600  # 1 hour
+
+# Optimization settings
+optimization:
+  # Enable predictive test selection
+  enable_predictions: true
+  
+  # Minimum subset size (percentage of total tests)
+  min_subset_percentage: 10
+  
+  # Maximum subset size (percentage of total tests)
+  max_subset_percentage: 100
+
+# Reporting
+reporting:
+  # Upload test results automatically
+  auto_upload: true
+  
+  # Include screenshots for UI tests
+  include_screenshots: true
+  
+  # Include logs
+  include_logs: true
+
