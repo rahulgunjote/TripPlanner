@@ -70,12 +70,17 @@ Launchable is an ML-powered predictive test selection platform that intelligentl
 ### Step 4: Install Dependencies
 
 ```bash
-# Install Launchable CLI
+# Install Launchable CLI (Python package)
 pip3 install --upgrade launchable
+
+# Or install from requirements.txt
+pip3 install -r requirements.txt
 
 # Install Ruby dependencies
 bundle install
 ```
+
+**Note**: Launchable is a Python CLI tool, not a Ruby gem. It must be installed using pip/pip3.
 
 ### Step 5: Verify Setup
 
@@ -360,10 +365,24 @@ launchable subset \
 
 **Solution**:
 ```bash
+# Install via pip3
 pip3 install --upgrade launchable
-# Or
+
+# Or via python3 module
 python3 -m pip install --upgrade launchable
+
+# Or from requirements.txt
+pip3 install -r requirements.txt
+
+# Verify installation
+which launchable
+launchable --version
 ```
+
+**Common causes**:
+- Python not in PATH
+- pip3 not installed
+- Virtual environment not activated
 
 ### Issue: Authentication failed
 
