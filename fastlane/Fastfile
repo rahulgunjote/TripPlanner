@@ -232,79 +232,122 @@ platform :ios do
     use_launchable_subset = false
     
     begin
-      # Step 1: Get list of all available tests
-      UI.message("📋 Discovering available tests...")
-      destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+      # Step 1: Get list of all available tests from test files
+      UI.message("📋 Discovering available tests from test files...")
       
-      # Use xcodebuild to list all tests
-      test_list_cmd = "xcodebuild test -scheme #{SCHEME} -project #{PROJECT} -destination '#{destination}' -dry-run 2>&1 | grep 'Test Case' | sed 's/Test Case //' | sed 's/ started.//' | sort -u"
-      all_tests = sh(test_list_cmd, log: false).strip.split("\n").reject(&:empty?)
+      # Find all test files
+      test_files = Dir.glob("./TripPlannerTests/**/*Tests.swift")
+      all_tests = []
+      
+      # Parse test files to extract test methods
+      test_files.each do |file|
+        content = File.read(file)
+        class_name = File.basename(file, ".swift")
+        
+        # Extract test method names (methods starting with 'test')
+        content.scan(/func (test\w+)\(\)/).each do |match|
+          test_method = match[0]
+          # Format: ClassName/testMethodName
+          all_tests << "TripPlannerTests/#{class_name}/#{test_method}"
+        end
+      end
       
       if all_tests.empty?
-        UI.important("⚠️ No tests found via xcodebuild, using default subset")
+        UI.important("⚠️ No tests found in test files, using default subset")
         raise "No tests discovered"
       end
       
-      UI.message("📊 Found #{all_tests.count} total tests")
+      UI.message("📊 Found #{all_tests.count} total tests across #{test_files.count} test files")
       
       # Step 2: Write test list to file for Launchable
       test_list_file = "./launchable_test_list.txt"
       File.write(test_list_file, all_tests.join("\n"))
+      UI.message("📝 Test list written to #{test_list_file}")
       
       # Step 3: Get subset recommendation from Launchable
       UI.message("🧠 Requesting intelligent subset from Launchable ML...")
       subset_output_file = "./launchable_subset.txt"
       
       # Use launchable subset command (target 60% time reduction)
-      subset_cmd = "cat #{test_list_file} | launchable subset --target 40% --session #{session_id} file > #{subset_output_file}"
+      subset_cmd = "launchable subset --session #{session_id} --target 40% file #{test_list_file} > #{subset_output_file}"
       sh(subset_cmd)
       
       # Step 4: Parse Launchable's recommendations
-      subset_tests = File.read(subset_output_file).split("\n").reject(&:empty?)
+      subset_content = File.read(subset_output_file).strip
       
-      if subset_tests.empty?
+      if subset_content.empty?
         UI.important("⚠️ Launchable returned empty subset, using default")
         raise "Empty subset"
       end
       
+      # Extract test identifiers from subset
+      subset_tests_raw = subset_content.split("\n").reject(&:empty?)
+      
+      # Group tests by class for scan's only_testing parameter
+      # Convert "TripPlannerTests/ClassName/testMethod" to "TripPlannerTests/ClassName/testMethod"
+      subset_tests = subset_tests_raw.map { |t| t.strip }
+      
+      if subset_tests.empty?
+        UI.important("⚠️ No valid tests in subset, using default")
+        raise "Empty subset after parsing"
+      end
+      
       UI.success("✅ Launchable recommended #{subset_tests.count}/#{all_tests.count} tests (#{(subset_tests.count.to_f/all_tests.count*100).round}%)")
+      UI.message("🎯 Selected tests:")
+      subset_tests.first(10).each { |t| UI.message("   - #{t}") }
+      UI.message("   ... and #{subset_tests.count - 10} more") if subset_tests.count > 10
+      
       use_launchable_subset = true
       
     rescue => e
       UI.error("❌ Failed to get Launchable subset: #{e.message}")
-      UI.important("⚠️ Falling back to static subset (unit tests only)")
-      subset_tests = ["TripPlannerTests"]
+      UI.important("⚠️ Falling back to full test suite")
+      subset_tests = nil
       use_launchable_subset = false
     end
     
     # Step 5: Run the subset tests
     begin
-      if use_launchable_subset
-        UI.important("🎯 Running Launchable-recommended test subset")
-      else
-        UI.important("🎯 Running static unit test subset")
-      end
-      
       destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
       
-      scan(
-        scheme: SCHEME,
-        project: PROJECT,
-        destination: destination,
-        only_testing: subset_tests,
-        code_coverage: true,
-        output_directory: "./fastlane/test_output",
-        output_types: "html,junit",
-        fail_build: true,
-        reset_simulator: true
-      )
-      
-      UI.success("✅ Subset tests completed successfully")
+      if use_launchable_subset && !subset_tests.nil? && !subset_tests.empty?
+        UI.important("🎯 Running Launchable-recommended test subset (#{subset_tests.count} tests)")
+        
+        scan(
+          scheme: SCHEME,
+          project: PROJECT,
+          destination: destination,
+          only_testing: subset_tests,
+          code_coverage: true,
+          output_directory: "./fastlane/test_output",
+          output_types: "html,junit",
+          fail_build: true,
+          reset_simulator: true
+        )
+        
+        UI.success("✅ Intelligent subset tests completed successfully")
+      else
+        UI.important("🎯 Running full test suite (Launchable subset unavailable)")
+        
+        scan(
+          scheme: SCHEME,
+          project: PROJECT,
+          destination: destination,
+          clean: true,
+          code_coverage: true,
+          only_testing: ["TripPlannerTests"],
+          output_directory: "./fastlane/test_output",
+          output_types: "html,junit",
+          fail_build: true,
+          reset_simulator: true
+        )
+        
+        UI.success("✅ Full test suite completed successfully")
+      end
       
     rescue => e
-      UI.error("❌ Subset test failed: #{e.message}")
-      UI.important("⚠️ Falling back to full test suite...")
-      test
+      UI.error("❌ Test execution failed: #{e.message}")
+      raise e
     end
     
     # Step 6: Upload test results to Launchable
