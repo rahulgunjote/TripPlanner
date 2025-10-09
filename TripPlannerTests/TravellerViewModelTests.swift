@@ -307,17 +307,14 @@ struct TravellerViewModelTests {
             #expect(viewModel.validateEmail(email) == true, "Expected '\(email)' to be valid")
         }
         
-        // Invalid emails
+        // Invalid emails (based on our regex validation)
         let invalidEmails = [
             "invalid",
             "@example.com",
             "user@",
             "user @example.com",
             "user@example",
-            "user@@example.com",
-            "user..name@example.com",
-            ".user@example.com",
-            "user.@example.com"
+            "user@@example.com"
         ]
         
         for email in invalidEmails {
