@@ -38,11 +38,14 @@ platform :ios do
   lane :build do
     UI.message("🔨 Building TripPlanner...")
     
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Building for destination: #{destination}")
+    
     xcodebuild(
       scheme: SCHEME,
       project: PROJECT,
       configuration: "Debug",
-      destination: "platform=iOS Simulator,name=#{SIMULATOR}",
+      destination: destination,
       clean: true,
       build: true,
       xcargs: "-quiet"
@@ -55,15 +58,19 @@ platform :ios do
   lane :test do
     UI.message("🧪 Running all tests...")
     
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Testing on destination: #{destination}")
+    
     scan(
       scheme: SCHEME,
       project: PROJECT,
-      device: SIMULATOR,
+      destination: destination,
       clean: true,
       code_coverage: true,
       output_directory: "./fastlane/test_output",
       output_types: "html,junit",
-      fail_build: true
+      fail_build: true,
+      reset_simulator: true
     )
     
     UI.success("✅ All tests passed!")
@@ -73,16 +80,20 @@ platform :ios do
   lane :unit_tests do
     UI.message("🧪 Running unit tests...")
     
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Testing on destination: #{destination}")
+    
     scan(
       scheme: SCHEME,
       project: PROJECT,
-      device: SIMULATOR,
+      destination: destination,
       clean: true,
       code_coverage: true,
       only_testing: ["TripPlannerTests"],
       output_directory: "./fastlane/test_output/unit_tests",
       output_types: "html,junit",
-      fail_build: true
+      fail_build: true,
+      reset_simulator: true
     )
     
     UI.success("✅ Unit tests passed!")
@@ -92,16 +103,20 @@ platform :ios do
   lane :ui_tests do
     UI.message("🧪 Running UI tests...")
     
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Testing on destination: #{destination}")
+    
     scan(
       scheme: SCHEME,
       project: PROJECT,
-      device: SIMULATOR,
+      destination: destination,
       clean: true,
       code_coverage: true,
       only_testing: ["TripPlannerUITests"],
       output_directory: "./fastlane/test_output/ui_tests",
       output_types: "html,junit",
-      fail_build: true
+      fail_build: true,
+      reset_simulator: true
     )
     
     UI.success("✅ UI tests passed!")
@@ -111,11 +126,14 @@ platform :ios do
   lane :build_for_testing do
     UI.message("🔨 Building for testing...")
     
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Building for destination: #{destination}")
+    
     xcodebuild(
       scheme: SCHEME,
       project: PROJECT,
       configuration: "Debug",
-      destination: "platform=iOS Simulator,name=#{SIMULATOR}",
+      destination: destination,
       build_for_testing: true,
       xcargs: "-quiet"
     )
@@ -128,16 +146,19 @@ platform :ios do
     UI.message("🧪 Running tests without building...")
     
     test_target = options[:target] || nil
+    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+    UI.message("Testing on destination: #{destination}")
     
     scan_options = {
       scheme: SCHEME,
       project: PROJECT,
-      device: SIMULATOR,
+      destination: destination,
       code_coverage: true,
       test_without_building: true,
       output_directory: "./fastlane/test_output",
       output_types: "html,junit",
-      fail_build: true
+      fail_build: true,
+      reset_simulator: true
     }
     
     if test_target
