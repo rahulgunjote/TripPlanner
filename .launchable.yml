@@ -4,18 +4,14 @@
 version: 1
 
 # Test framework configuration
-test_framework: xcode
+# Using 'file' format for JUnit XML test results from Xcode
+test_framework: file
 
 # Project settings
 project:
   name: TripPlanner
-  scheme: TripPlanner
-  project_file: TripPlanner.xcodeproj
-
-# Test targets
-test_targets:
-  - TripPlannerTests
-  # - TripPlannerUITests
+  language: swift
+  platform: ios
 
 # Subset configuration
 subset:

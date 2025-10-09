@@ -155,8 +155,7 @@ fastlane/
 │   ├── Test Lanes
 │   │   ├── test
 │   │   ├── unit_tests
-│   │   ├── ui_tests
-│   │   └── test_without_building
+│   │   └── ui_tests
 │   │
 │   ├── Quality Lanes
 │   │   ├── coverage

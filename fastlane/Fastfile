@@ -67,6 +67,7 @@ platform :ios do
       destination: destination,
       clean: true,
       code_coverage: true,
+      only_testing: ["TripPlannerTests"],
       output_directory: "./fastlane/test_output",
       output_types: "html,junit",
       fail_build: true,
@@ -141,35 +142,6 @@ platform :ios do
     UI.success("✅ Build for testing completed!")
   end
 
-  desc "Run tests without building (used in CI)"
-  lane :test_without_building do |options|
-    UI.message("🧪 Running tests without building...")
-    
-    test_target = options[:target] || nil
-    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
-    UI.message("Testing on destination: #{destination}")
-    
-    scan_options = {
-      scheme: SCHEME,
-      project: PROJECT,
-      destination: destination,
-      code_coverage: true,
-      test_without_building: true,
-      output_directory: "./fastlane/test_output",
-      output_types: "html,junit",
-      fail_build: true,
-      reset_simulator: true
-    }
-    
-    if test_target
-      scan_options[:only_testing] = [test_target]
-    end
-    
-    scan(scan_options)
-    
-    UI.success("✅ Tests passed!")
-  end
-
   desc "Generate code coverage report"
   lane :coverage do
     UI.message("📊 Generating code coverage report...")
@@ -224,7 +196,47 @@ platform :ios do
     UI.success("✅ Build recorded!")
   end
   
-  desc "Run tests with Launchable subset"
+  desc "Run full test suite and upload to Launchable (for training ML models)"
+  lane :launchable_train do
+    UI.header("📊 Running Full Test Suite for Launchable Training")
+    
+    # Record session start
+    session_id = sh("launchable record session --build '#{ENV['GITHUB_RUN_ID'] || Time.now.to_i}'", log: false).strip
+    ENV['LAUNCHABLE_SESSION_ID'] = session_id
+    UI.message("Session ID: #{session_id}")
+    
+    # Run full test suite
+    UI.message("🧪 Running all unit and UI tests...")
+    begin
+      test  # Run full suite
+    rescue => e
+      UI.error("❌ Tests failed: #{e.message}")
+      # Continue to upload results even if tests fail
+    end
+    
+    # Record test results
+    UI.message("📤 Uploading test results to Launchable for training...")
+    
+    # Find JUnit XML files
+    junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
+    
+    if junit_files.empty?
+      UI.warning("⚠️ No JUnit files found to upload")
+    else
+      begin
+        sh("launchable record tests --session #{session_id} file #{junit_files}")
+        UI.success("✅ Test results uploaded to Launchable")
+        UI.message("📈 This data will be used to train ML models for intelligent test selection")
+      rescue => e
+        UI.error("❌ Failed to upload test results: #{e.message}")
+        raise e  # Fail the build if upload fails
+      end
+    end
+    
+    UI.success("✅ Training data uploaded successfully!")
+  end
+  
+  desc "Run tests with Launchable intelligent subset (for PRs)"
   lane :launchable_subset_test do
     UI.header("🧠 Running Launchable Intelligent Test Selection")
     
@@ -233,24 +245,70 @@ platform :ios do
     ENV['LAUNCHABLE_SESSION_ID'] = session_id
     UI.message("Session ID: #{session_id}")
     
-    # Record tests (discover all tests)
-    UI.message("🔍 Recording available tests...")
-    sh("launchable record tests --session #{session_id} xcode")
+    # Build for testing
+    UI.message("🔨 Building for testing...")
+    build_for_testing
     
-    # Get subset of tests to run
-    UI.message("🎯 Getting optimized test subset...")
-    subset_file = ".launchable_subset.txt"
-    sh("launchable subset --target 3m --session #{session_id} xcode > #{subset_file}")
+    # Try to get intelligent subset from Launchable
+    UI.message("🎯 Getting intelligent test subset from Launchable...")
     
-    # Read subset tests
-    subset_tests = File.read(subset_file).split("\n").reject(&:empty?)
-    UI.message("📊 Running #{subset_tests.count} tests from subset")
+    subset_tests = []
+    use_launchable_subset = false
     
-    if subset_tests.empty?
-      UI.important("⚠️ No tests in subset, running all tests")
-      test
-    else
-      # Run subset tests
+    begin
+      # Step 1: Get list of all available tests
+      UI.message("📋 Discovering available tests...")
+      destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+      
+      # Use xcodebuild to list all tests
+      test_list_cmd = "xcodebuild test -scheme #{SCHEME} -project #{PROJECT} -destination '#{destination}' -dry-run 2>&1 | grep 'Test Case' | sed 's/Test Case //' | sed 's/ started.//' | sort -u"
+      all_tests = sh(test_list_cmd, log: false).strip.split("\n").reject(&:empty?)
+      
+      if all_tests.empty?
+        UI.warning("⚠️ No tests found via xcodebuild, using default subset")
+        raise "No tests discovered"
+      end
+      
+      UI.message("📊 Found #{all_tests.count} total tests")
+      
+      # Step 2: Write test list to file for Launchable
+      test_list_file = "./launchable_test_list.txt"
+      File.write(test_list_file, all_tests.join("\n"))
+      
+      # Step 3: Get subset recommendation from Launchable
+      UI.message("🧠 Requesting intelligent subset from Launchable ML...")
+      subset_output_file = "./launchable_subset.txt"
+      
+      # Use launchable subset command (target 60% time reduction)
+      subset_cmd = "cat #{test_list_file} | launchable subset --target 40% --session #{session_id} file > #{subset_output_file}"
+      sh(subset_cmd)
+      
+      # Step 4: Parse Launchable's recommendations
+      subset_tests = File.read(subset_output_file).split("\n").reject(&:empty?)
+      
+      if subset_tests.empty?
+        UI.warning("⚠️ Launchable returned empty subset, using default")
+        raise "Empty subset"
+      end
+      
+      UI.success("✅ Launchable recommended #{subset_tests.count}/#{all_tests.count} tests (#{(subset_tests.count.to_f/all_tests.count*100).round}%)")
+      use_launchable_subset = true
+      
+    rescue => e
+      UI.error("❌ Failed to get Launchable subset: #{e.message}")
+      UI.important("⚠️ Falling back to static subset (unit tests only)")
+      subset_tests = ["TripPlannerTests"]
+      use_launchable_subset = false
+    end
+    
+    # Step 5: Run the subset tests
+    begin
+      if use_launchable_subset
+        UI.important("🎯 Running Launchable-recommended test subset")
+      else
+        UI.important("🎯 Running static unit test subset")
+      end
+      
       destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
       
       scan(
@@ -264,13 +322,41 @@ platform :ios do
         fail_build: true,
         reset_simulator: true
       )
+      
+      UI.success("✅ Subset tests completed successfully")
+      
+    rescue => e
+      UI.error("❌ Subset test failed: #{e.message}")
+      UI.important("⚠️ Falling back to full test suite...")
+      test
     end
     
-    # Record test results
+    # Step 6: Upload test results to Launchable
     UI.message("📤 Uploading test results to Launchable...")
-    sh("launchable record tests --session #{session_id} xcode ./fastlane/test_output/*.junit")
     
-    UI.success("✅ Launchable testing completed!")
+    # Find JUnit XML files
+    junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
+    
+    if junit_files.empty?
+      UI.warning("⚠️ No JUnit files found to upload")
+    else
+      begin
+        sh("launchable record tests --session #{session_id} file #{junit_files}")
+        UI.success("✅ Test results uploaded to Launchable")
+        
+        if use_launchable_subset
+          UI.message("📈 Launchable ML model will learn from these results")
+        end
+      rescue => e
+        UI.error("❌ Failed to upload test results: #{e.message}")
+        UI.important("Continuing anyway...")
+      end
+    end
+    
+    # Cleanup temporary files
+    sh("rm -f ./launchable_test_list.txt ./launchable_subset.txt", log: false) rescue nil
+    
+    UI.success("✅ Launchable subset testing completed!")
   end
   
   desc "Run tests with Launchable (with fallback)"

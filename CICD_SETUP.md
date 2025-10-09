@@ -108,7 +108,6 @@ bundle exec fastlane lanes
 | `test` | Run all tests (Unit + UI) | `bundle exec fastlane test` |
 | `unit_tests` | Run only unit tests | `bundle exec fastlane unit_tests` |
 | `ui_tests` | Run only UI tests | `bundle exec fastlane ui_tests` |
-| `test_without_building` | Run tests on pre-built artifacts | `bundle exec fastlane test_without_building` |
 
 ### Quality Lanes
 
@@ -244,17 +243,6 @@ bundle exec fastlane unit_tests
 ```bash
 # Simulate CI pipeline
 bundle exec fastlane ci
-```
-
-#### Optimized Test Cycle
-```bash
-# Build once
-bundle exec fastlane build_for_testing
-
-# Run tests multiple times without rebuilding
-bundle exec fastlane test_without_building
-bundle exec fastlane test_without_building target:TripPlannerTests
-bundle exec fastlane test_without_building target:TripPlannerUITests
 ```
 
 ### Pre-Commit Checks
@@ -398,9 +386,12 @@ xcrun simctl erase all
 
 ### Local Development
 ```bash
-# Use build_for_testing to avoid rebuilding
-bundle exec fastlane build_for_testing  # Once
-bundle exec fastlane test_without_building  # Multiple times
+# Run all tests
+bundle exec fastlane test
+
+# Or run specific test types
+bundle exec fastlane unit_tests
+bundle exec fastlane ui_tests
 ```
 
 ### CI Optimization
