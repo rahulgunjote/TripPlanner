@@ -14,19 +14,11 @@
 			remoteGlobalIDString = 7588EFC42E976F6800A4AF3F;
 			remoteInfo = TripPlanner;
 		};
-		7588EFE62E976F6A00A4AF3F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 7588EFBD2E976F6800A4AF3F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 7588EFC42E976F6800A4AF3F;
-			remoteInfo = TripPlanner;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		7588EFC52E976F6800A4AF3F /* TripPlanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TripPlanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7588EFDB2E976F6A00A4AF3F /* TripPlannerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TripPlannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		7588EFE52E976F6A00A4AF3F /* TripPlannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TripPlannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -53,11 +45,6 @@
 			path = TripPlannerTests;
 			sourceTree = "<group>";
 		};
-		7588EFE82E976F6A00A4AF3F /* TripPlannerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TripPlannerUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,13 +62,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7588EFE22E976F6A00A4AF3F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,7 +70,6 @@
 			children = (
 				7588EFC72E976F6800A4AF3F /* TripPlanner */,
 				7588EFDE2E976F6A00A4AF3F /* TripPlannerTests */,
-				7588EFE82E976F6A00A4AF3F /* TripPlannerUITests */,
 				7588EFC62E976F6800A4AF3F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,7 +79,6 @@
 			children = (
 				7588EFC52E976F6800A4AF3F /* TripPlanner.app */,
 				7588EFDB2E976F6A00A4AF3F /* TripPlannerTests.xctest */,
-				7588EFE52E976F6A00A4AF3F /* TripPlannerUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -153,29 +131,6 @@
 			productReference = 7588EFDB2E976F6A00A4AF3F /* TripPlannerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		7588EFE42E976F6A00A4AF3F /* TripPlannerUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 7588EFF62E976F6A00A4AF3F /* Build configuration list for PBXNativeTarget "TripPlannerUITests" */;
-			buildPhases = (
-				7588EFE12E976F6A00A4AF3F /* Sources */,
-				7588EFE22E976F6A00A4AF3F /* Frameworks */,
-				7588EFE32E976F6A00A4AF3F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				7588EFE72E976F6A00A4AF3F /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				7588EFE82E976F6A00A4AF3F /* TripPlannerUITests */,
-			);
-			name = TripPlannerUITests;
-			packageProductDependencies = (
-			);
-			productName = TripPlannerUITests;
-			productReference = 7588EFE52E976F6A00A4AF3F /* TripPlannerUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -190,10 +145,6 @@
 						CreatedOnToolsVersion = 26.0.1;
 					};
 					7588EFDA2E976F6A00A4AF3F = {
-						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = 7588EFC42E976F6800A4AF3F;
-					};
-					7588EFE42E976F6A00A4AF3F = {
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = 7588EFC42E976F6800A4AF3F;
 					};
@@ -215,7 +166,6 @@
 			targets = (
 				7588EFC42E976F6800A4AF3F /* TripPlanner */,
 				7588EFDA2E976F6A00A4AF3F /* TripPlannerTests */,
-				7588EFE42E976F6A00A4AF3F /* TripPlannerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -229,13 +179,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7588EFD92E976F6A00A4AF3F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		7588EFE32E976F6A00A4AF3F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -259,13 +202,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7588EFE12E976F6A00A4AF3F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -273,11 +209,6 @@
 			isa = PBXTargetDependency;
 			target = 7588EFC42E976F6800A4AF3F /* TripPlanner */;
 			targetProxy = 7588EFDC2E976F6A00A4AF3F /* PBXContainerItemProxy */;
-		};
-		7588EFE72E976F6A00A4AF3F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 7588EFC42E976F6800A4AF3F /* TripPlanner */;
-			targetProxy = 7588EFE62E976F6A00A4AF3F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -513,46 +444,6 @@
 			};
 			name = Release;
 		};
-		7588EFF72E976F6A00A4AF3F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YJ5F6A3DPP;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rg.test.TripPlannerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = TripPlanner;
-			};
-			name = Debug;
-		};
-		7588EFF82E976F6A00A4AF3F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YJ5F6A3DPP;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rg.test.TripPlannerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = TripPlanner;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -579,15 +470,6 @@
 			buildConfigurations = (
 				7588EFF42E976F6A00A4AF3F /* Debug */,
 				7588EFF52E976F6A00A4AF3F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		7588EFF62E976F6A00A4AF3F /* Build configuration list for PBXNativeTarget "TripPlannerUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7588EFF72E976F6A00A4AF3F /* Debug */,
-				7588EFF82E976F6A00A4AF3F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
