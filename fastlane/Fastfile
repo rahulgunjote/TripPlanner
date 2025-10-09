@@ -5,10 +5,10 @@ platform :ios do
   SCHEME = "TripPlanner"
   PROJECT = "TripPlanner.xcodeproj"
   SIMULATOR = "iPhone 17"
-  IOS_VERSION = "26.0"
+  IOS_VERSION = "18.0"
   
   before_all do
-    ensure_xcode_version(version: "26.0")
+    ensure_xcode_version(version: "16.4")
   end
 
   desc "Build the project"
