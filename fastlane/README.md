@@ -87,13 +87,21 @@ Run full CI pipeline
 
 Record build for Launchable
 
+### ios launchable_train
+
+```sh
+[bundle exec] fastlane ios launchable_train
+```
+
+Run full test suite and upload to Launchable (for training ML models)
+
 ### ios launchable_subset_test
 
 ```sh
 [bundle exec] fastlane ios launchable_subset_test
 ```
 
-Run tests with Launchable subset
+Run tests with Launchable intelligent subset (for PRs)
 
 ### ios launchable_test
 
