@@ -6,6 +6,12 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: write
+
 jobs:
   launchable-tests:
     name: Launchable Intelligent Testing
@@ -80,8 +86,16 @@ jobs:
         if: always()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            
+            // Only comment on pull requests
+            if (!context.payload.pull_request) {
+              console.log('Not a pull request, skipping comment');
+              return;
+            }
+            
             let comment = '🧠 **Launchable Intelligent Testing**\n\n';
             
             try {
@@ -93,8 +107,8 @@ jobs:
             
             comment += '\n[View detailed insights on Launchable](https://app.launchableinc.com)';
             
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            await github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: comment
@@ -153,14 +167,18 @@ jobs:
         if: always()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const testResults = '✅ UI tests completed!';
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: testResults
-            });
+            // Only comment on pull requests
+            if (context.payload.pull_request) {
+              const testResults = '⚠️ Intelligent testing failed, ran full test suite as fallback.\n✅ Full test suite completed!';
+              await github.rest.issues.createComment({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: testResults
+              });
+            }
   
   build-check:
     name: Build Check
@@ -194,11 +212,15 @@ jobs:
         if: success()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Build succeeded!'
-            });
+            // Only comment on pull requests
+            if (context.payload.pull_request) {
+              await github.rest.issues.createComment({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '✅ Build succeeded!'
+              });
+            }
 

@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: write
+
 jobs:
   build-and-test:
     name: Build and Test

@@ -12,7 +12,7 @@ platform :ios do
   if IS_CI
     # CI Environment (GitHub Actions)
     SIMULATOR = "iPhone 16"
-    IOS_VERSION = "26.0"
+    IOS_VERSION = "18.0"  # Xcode 16.4 supports up to iOS 18.5.99
     XCODE_VERSION = "16.4"
   else
     # Local Development Environment
