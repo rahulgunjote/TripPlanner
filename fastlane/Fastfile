@@ -4,11 +4,34 @@ platform :ios do
   # Variables
   SCHEME = "TripPlanner"
   PROJECT = "TripPlanner.xcodeproj"
-  SIMULATOR = "iPhone 17"
-  IOS_VERSION = "18.0"
+  
+  # Detect CI environment
+  IS_CI = ENV['CI'] == 'true' || ENV['GITHUB_ACTIONS'] == 'true'
+  
+  # Configuration based on environment
+  if IS_CI
+    # CI Environment (GitHub Actions)
+    SIMULATOR = "iPhone 16"
+    IOS_VERSION = "18.0"
+    XCODE_VERSION = "16.4"
+  else
+    # Local Development Environment
+    SIMULATOR = "iPhone 17"
+    IOS_VERSION = "26.0"
+    XCODE_VERSION = nil # Skip Xcode version check locally
+  end
   
   before_all do
-    ensure_xcode_version(version: "16.4")
+    if IS_CI
+      UI.important("🤖 Running in CI environment")
+      UI.message("Simulator: #{SIMULATOR}")
+      UI.message("iOS Version: #{IOS_VERSION}")
+      ensure_xcode_version(version: XCODE_VERSION)
+    else
+      UI.important("💻 Running in local environment")
+      UI.message("Simulator: #{SIMULATOR}")
+      UI.message("iOS Version: #{IOS_VERSION}")
+    end
   end
 
   desc "Build the project"
