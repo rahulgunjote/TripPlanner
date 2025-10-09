@@ -1,0 +1,186 @@
+default_platform(:ios)
+
+platform :ios do
+  # Variables
+  SCHEME = "TripPlanner"
+  PROJECT = "TripPlanner.xcodeproj"
+  SIMULATOR = "iPhone 17"
+  IOS_VERSION = "26.0"
+  
+  before_all do
+    ensure_xcode_version(version: "26.0")
+  end
+
+  desc "Build the project"
+  lane :build do
+    UI.message("🔨 Building TripPlanner...")
+    
+    xcodebuild(
+      scheme: SCHEME,
+      project: PROJECT,
+      configuration: "Debug",
+      destination: "platform=iOS Simulator,name=#{SIMULATOR}",
+      clean: true,
+      build: true,
+      xcargs: "-quiet"
+    )
+    
+    UI.success("✅ Build completed successfully!")
+  end
+
+  desc "Run all tests (Unit + UI)"
+  lane :test do
+    UI.message("🧪 Running all tests...")
+    
+    scan(
+      scheme: SCHEME,
+      project: PROJECT,
+      device: SIMULATOR,
+      clean: true,
+      code_coverage: true,
+      output_directory: "./fastlane/test_output",
+      output_types: "html,junit",
+      fail_build: true
+    )
+    
+    UI.success("✅ All tests passed!")
+  end
+
+  desc "Run unit tests only"
+  lane :unit_tests do
+    UI.message("🧪 Running unit tests...")
+    
+    scan(
+      scheme: SCHEME,
+      project: PROJECT,
+      device: SIMULATOR,
+      clean: true,
+      code_coverage: true,
+      only_testing: ["TripPlannerTests"],
+      output_directory: "./fastlane/test_output/unit_tests",
+      output_types: "html,junit",
+      fail_build: true
+    )
+    
+    UI.success("✅ Unit tests passed!")
+  end
+
+  desc "Run UI tests only"
+  lane :ui_tests do
+    UI.message("🧪 Running UI tests...")
+    
+    scan(
+      scheme: SCHEME,
+      project: PROJECT,
+      device: SIMULATOR,
+      clean: true,
+      code_coverage: true,
+      only_testing: ["TripPlannerUITests"],
+      output_directory: "./fastlane/test_output/ui_tests",
+      output_types: "html,junit",
+      fail_build: true
+    )
+    
+    UI.success("✅ UI tests passed!")
+  end
+
+  desc "Build for testing (used in CI)"
+  lane :build_for_testing do
+    UI.message("🔨 Building for testing...")
+    
+    xcodebuild(
+      scheme: SCHEME,
+      project: PROJECT,
+      configuration: "Debug",
+      destination: "platform=iOS Simulator,name=#{SIMULATOR}",
+      build_for_testing: true,
+      xcargs: "-quiet"
+    )
+    
+    UI.success("✅ Build for testing completed!")
+  end
+
+  desc "Run tests without building (used in CI)"
+  lane :test_without_building do |options|
+    UI.message("🧪 Running tests without building...")
+    
+    test_target = options[:target] || nil
+    
+    scan_options = {
+      scheme: SCHEME,
+      project: PROJECT,
+      device: SIMULATOR,
+      code_coverage: true,
+      test_without_building: true,
+      output_directory: "./fastlane/test_output",
+      output_types: "html,junit",
+      fail_build: true
+    }
+    
+    if test_target
+      scan_options[:only_testing] = [test_target]
+    end
+    
+    scan(scan_options)
+    
+    UI.success("✅ Tests passed!")
+  end
+
+  desc "Generate code coverage report"
+  lane :coverage do
+    UI.message("📊 Generating code coverage report...")
+    
+    xcov(
+      scheme: SCHEME,
+      project: PROJECT,
+      output_directory: "./fastlane/test_output/coverage",
+      minimum_coverage_percentage: 60.0,
+      ignore_file_path: "./.xcovignore"
+    )
+    
+    UI.success("✅ Coverage report generated!")
+  end
+
+  desc "Lint Swift code"
+  lane :lint do
+    UI.message("🔍 Linting Swift code...")
+    
+    # Note: Requires SwiftLint to be installed
+    # Install with: brew install swiftlint
+    swiftlint(
+      mode: :lint,
+      config_file: ".swiftlint.yml",
+      reporter: "html",
+      output_file: "./fastlane/test_output/swiftlint.html",
+      ignore_exit_status: false
+    )
+    
+    UI.success("✅ Linting completed!")
+  end
+
+  desc "Run full CI pipeline"
+  lane :ci do
+    UI.message("🚀 Running full CI pipeline...")
+    
+    build
+    unit_tests
+    ui_tests
+    
+    UI.success("✅ CI pipeline completed successfully!")
+  end
+
+  desc "Clean build artifacts"
+  lane :clean do
+    UI.message("🧹 Cleaning build artifacts...")
+    
+    clear_derived_data
+    
+    UI.success("✅ Cleanup completed!")
+  end
+
+  # Error handling
+  error do |lane, exception|
+    UI.error("❌ Lane #{lane} failed with error: #{exception.message}")
+  end
+end
+

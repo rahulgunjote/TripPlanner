@@ -1,0 +1,12 @@
+# Xcov ignore file for TripPlanner
+# Exclude test files from coverage
+*Tests.swift
+*UITests.swift
+*TestsLaunchTests.swift
+
+# Exclude generated files
+*.generated.swift
+
+# Exclude SwiftUI previews
+*Previews.swift
+
