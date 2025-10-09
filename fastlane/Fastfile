@@ -344,7 +344,8 @@ platform :ios do
       subset_output_file = "./launchable_subset.txt"
       
       # Use launchable subset command (target 60% time reduction)
-      subset_cmd = "launchable subset --session #{session_id} --target 40% file #{test_list_file} > #{subset_output_file}"
+      # Note: 'launchable subset file' reads from stdin, not from a file argument
+      subset_cmd = "cat #{test_list_file} | launchable subset --session #{session_id} --target 40% file > #{subset_output_file}"
       sh(subset_cmd)
       
       # Step 4: Parse Launchable's recommendations
