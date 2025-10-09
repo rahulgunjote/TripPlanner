@@ -32,7 +32,7 @@ jobs:
         run: bundle install
       
       - name: Install Launchable CLI
-        run: pip3 install --upgrade launchable
+        run: pip3 install --upgrade --break-system-packages launchable
       
       - name: Verify Launchable Setup
         run: bundle exec fastlane launchable_verify

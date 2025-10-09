@@ -71,16 +71,26 @@ Launchable is an ML-powered predictive test selection platform that intelligentl
 
 ```bash
 # Install Launchable CLI (Python package)
-pip3 install --upgrade launchable
+# Option 1: Using pipx (recommended for local development)
+brew install pipx
+pipx install launchable
 
-# Or install from requirements.txt
-pip3 install -r requirements.txt
+# Option 2: Using pip3 with user flag
+pip3 install --user launchable
+
+# Option 3: Using virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install launchable
+
+# Option 4: Break system packages (CI only - not recommended locally)
+pip3 install --upgrade --break-system-packages launchable
 
 # Install Ruby dependencies
 bundle install
 ```
 
-**Note**: Launchable is a Python CLI tool, not a Ruby gem. It must be installed using pip/pip3.
+**Note**: Launchable is a Python CLI tool, not a Ruby gem. For local development, use `pipx` or `--user` flag. In CI (GitHub Actions), we use `--break-system-packages` since runners are ephemeral.
 
 ### Step 5: Verify Setup
 
@@ -365,14 +375,17 @@ launchable subset \
 
 **Solution**:
 ```bash
-# Install via pip3
-pip3 install --upgrade launchable
+# Recommended: Use pipx
+brew install pipx
+pipx install launchable
 
-# Or via python3 module
-python3 -m pip install --upgrade launchable
+# Alternative: Install with --user flag
+pip3 install --user launchable
 
-# Or from requirements.txt
-pip3 install -r requirements.txt
+# Alternative: Use virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install launchable
 
 # Verify installation
 which launchable
@@ -383,6 +396,36 @@ launchable --version
 - Python not in PATH
 - pip3 not installed
 - Virtual environment not activated
+- Installed with --user but ~/.local/bin not in PATH
+
+### Issue: "externally-managed-environment" error
+
+**Problem**: Python 3.11+ on macOS protects system packages (PEP 668)
+
+**Solutions**:
+
+**Local Development (recommended)**:
+```bash
+# Option 1: Use pipx (best for CLI tools)
+brew install pipx
+pipx install launchable
+
+# Option 2: Use --user flag
+pip3 install --user launchable
+# Add to PATH if needed:
+export PATH="$HOME/.local/bin:$PATH"
+
+# Option 3: Use virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install launchable
+```
+
+**CI/CD Only**:
+```bash
+# Safe in CI since runners are ephemeral
+pip3 install --break-system-packages launchable
+```
 
 ### Issue: Authentication failed
 

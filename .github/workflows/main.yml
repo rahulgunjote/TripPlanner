@@ -55,6 +55,9 @@ jobs:
           path: fastlane/test_output/
           retention-days: 30
       
+      - name: Install Launchable CLI
+        run: pip3 install --upgrade --break-system-packages launchable
+      
       - name: Upload Code Coverage
         if: success()
         uses: codecov/codecov-action@v4

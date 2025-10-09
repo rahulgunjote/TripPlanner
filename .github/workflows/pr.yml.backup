@@ -1,0 +1,22 @@
+# This is a backup showing alternative installation methods
+
+# Alternative 1: Using pipx
+- name: Install pipx
+  run: brew install pipx
+
+- name: Install Launchable CLI
+  run: pipx install launchable
+
+# Alternative 2: Using virtual environment
+- name: Setup Python Virtual Environment
+  run: |
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip3 install launchable
+    echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+    echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
+# Alternative 3: Using --user flag
+- name: Install Launchable CLI
+  run: pip3 install --user launchable
+
