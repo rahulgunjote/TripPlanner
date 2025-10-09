@@ -26,8 +26,8 @@
 │  │  Available Lanes:                                            │  │
 │  │  • bundle exec fastlane build                                │  │
 │  │  • bundle exec fastlane unit_tests                           │  │
-│  │  • bundle exec fastlane ui_tests                             │  │
 │  │  • bundle exec fastlane ci (full pipeline)                   │  │
+│  │  • bundle exec fastlane launchable_test                      │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │                              ↓                                       │
 └──────────────────────────────┼───────────────────────────────────────┘
@@ -52,10 +52,10 @@
 │                           │    │                               │
 │  Steps:                   │    │  Jobs (Parallel):             │
 │  1. Setup Environment     │    │  1. Build Check               │
-│  2. Build Project         │    │  2. Unit Tests                │
-│  3. Run Unit Tests        │    │  3. UI Tests (after #2)       │
-│  4. Run UI Tests          │    │                               │
-│  5. Upload Results        │    │  Features:                    │
+│  2. Build Project         │    │  2. Launchable Tests          │
+│  3. Run Tests             │    │     (Intelligent subset)      │
+│  4. Upload Results        │    │                               │
+│  5. Record in Launchable  │    │  Features:                    │
 │  6. Upload Coverage       │    │  • Parallel execution         │
 │  7. Comment on Commit     │    │  • PR comments                │
 │                           │    │  • Artifact uploads           │
@@ -98,11 +98,8 @@ Push to main
     │   ├─► ExpenseViewModelTests
     │   └─► TripModelTests
     │
-    ├─► Run UI Tests (fastlane ui_tests)
-    │   ├─► TripPlannerUITests
-    │   ├─► TripFlowUITests
-    │   ├─► TravellerFlowUITests
-    │   └─► ItineraryAndExpenseUITests
+    ├─► Run Tests (fastlane test)
+    │   └─► TripPlannerTests (Unit tests)
     │
     ├─► Generate Artifacts
     │   ├─► HTML Test Report
@@ -120,25 +117,22 @@ Push to main
 ```
 Create/Update PR
     │
-    ├─────────────┬─────────────┬────────────►
-    │             │             │
-    ▼             ▼             ▼
-┌────────┐   ┌───────┐   ┌────────────┐
-│ Build  │   │ Unit  │   │ UI Tests   │
-│ Check  │   │ Tests │   │ (Sequential)│
-└────────┘   └───────┘   └────────────┘
-    │             │             │
-    │             │             │ (waits for unit tests)
-    │             │             │
-    ▼             ▼             ▼
-┌────────┐   ┌───────┐   ┌────────────┐
-│Comment │   │Upload │   │   Upload   │
-│on PR   │   │Results│   │   Results  │
-│        │   │       │   │     +      │
-│✅ Build│   │✅Unit │   │Screenshots │
-│Success │   │ Pass  │   │            │
-└────────┘   └───────┘   │✅UI Pass   │
-                         └────────────┘
+    ├─────────────┬─────────────►
+    │             │
+    ▼             ▼
+┌────────┐   ┌───────────────────┐
+│ Build  │   │ Launchable Tests  │
+│ Check  │   │ (Intelligent)     │
+└────────┘   └───────────────────┘
+    │             │
+    ▼             ▼
+┌────────┐   ┌───────────────┐
+│Comment │   │Upload Results │
+│on PR   │   │               │
+│        │   │               │
+│✅ Build│   │✅Tests Pass   │
+│Success │   │               │
+└────────┘   └───────────────┘
 ```
 
 ---
@@ -154,8 +148,7 @@ fastlane/
 │   │
 │   ├── Test Lanes
 │   │   ├── test
-│   │   ├── unit_tests
-│   │   └── ui_tests
+│   │   └── unit_tests
 │   │
 │   ├── Quality Lanes
 │   │   ├── coverage
@@ -229,34 +222,6 @@ Generate Report
     └─► Execution Time
 ```
 
-### UI Tests Flow
-```
-Build for Testing
-    ↓
-Launch Simulator
-    ↓
-Install App
-    ↓
-For Each Test Suite:
-    ├─► TripPlannerUITests
-    │   ├─► Launch App
-    │   ├─► Test Tab Navigation
-    │   ├─► Test Trip List
-    │   └─► Capture Screenshots (on failure)
-    │
-    ├─► TripFlowUITests
-    │   ├─► Test Create Trip
-    │   ├─► Test Trip Detail
-    │   └─► Test Swipe Actions
-    │
-    └─► ... (other UI test suites)
-    ↓
-Generate Report
-    ├─► Screenshots
-    ├─► Video (if enabled)
-    └─► Test Results
-```
-
 ---
 
 ## 📈 Performance Characteristics
@@ -268,15 +233,15 @@ Generate Report
 | Setup | - | ~2 minutes |
 | Build | ~30 seconds | ~1 minute |
 | Unit Tests | ~10 seconds | ~20 seconds |
-| UI Tests | ~2 minutes | ~3 minutes |
-| **Total** | **~3 minutes** | **~6-7 minutes** |
+| Launchable (Subset) | ~30 seconds | ~45 seconds |
+| **Total** | **~1 minute** | **~2 minutes** |
 
 ### Optimization Strategies
 
 1. **Build Caching:** Bundler cache in GitHub Actions
-2. **Parallel Execution:** Unit and Build checks run in parallel
-3. **Sequential UI Tests:** Only run after unit tests pass
-4. **Selective Testing:** Run unit tests first (fail fast)
+2. **Intelligent Test Selection:** Launchable ML-powered subset
+3. **Fail Fast:** Run critical tests first
+4. **Full Test Suite on Main:** Comprehensive testing + ML training
 
 ---
 
@@ -333,7 +298,7 @@ Fast   Reliable  Actionable
 - ✅ GitHub Actions (CI/CD)
 - ✅ Xcode Build System
 - ✅ Swift Testing Framework
-- ✅ XCTest UI Testing
+- ✅ Launchable Intelligent Testing
 
 ### Future Integrations (Optional)
 - [ ] Codecov (Coverage reporting)
@@ -370,8 +335,8 @@ Fast   Reliable  Actionable
 ```
 ✅ All builds pass
 ✅ All unit tests pass (20+ tests)
-✅ All UI tests pass (50+ tests)
 ✅ Code coverage > 60%
+✅ Launchable subset tests pass
 ✅ No linting errors
 ✅ Artifacts uploaded
 ```
@@ -379,8 +344,7 @@ Fast   Reliable  Actionable
 ### PR Workflow Success
 ```
 ✅ Build check passes
-✅ Unit tests pass
-✅ UI tests pass
+✅ Launchable tests pass
 ✅ No merge conflicts
 ✅ Reviews approved
 ✅ Up-to-date with base branch

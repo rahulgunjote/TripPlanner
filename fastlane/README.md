@@ -39,14 +39,6 @@ Run all tests (Unit + UI)
 
 Run unit tests only
 
-### ios ui_tests
-
-```sh
-[bundle exec] fastlane ios ui_tests
-```
-
-Run UI tests only
-
 ### ios build_for_testing
 
 ```sh

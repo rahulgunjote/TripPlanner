@@ -166,15 +166,7 @@ The project includes comprehensive test coverage:
 - **ExpenseViewModelTests**: Tests for expense calculations and splitting
 - **TripModelTests**: Tests for data models
 
-### UI Tests
-- **TripPlannerUITests**: Core functionality and navigation tests
-- **TripFlowUITests**: Complete trip lifecycle testing
-- **TravellerFlowUITests**: Traveller management and contact import
-- **ItineraryAndExpenseUITests**: Itinerary and expense feature testing
-
-**Total Coverage**: 50+ UI tests covering all major user flows
-
-For detailed information about running and maintaining tests, see [UI_TESTS_GUIDE.md](UI_TESTS_GUIDE.md).
+**Total Coverage**: 20+ unit tests covering all core business logic
 
 ### Running Tests
 

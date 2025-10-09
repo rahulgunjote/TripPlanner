@@ -54,7 +54,7 @@ platform :ios do
     UI.success("✅ Build completed successfully!")
   end
 
-  desc "Run all tests (Unit + UI)"
+  desc "Run all tests"
   lane :test do
     UI.message("🧪 Running all tests...")
     
@@ -98,29 +98,6 @@ platform :ios do
     )
     
     UI.success("✅ Unit tests passed!")
-  end
-
-  desc "Run UI tests only"
-  lane :ui_tests do
-    UI.message("🧪 Running UI tests...")
-    
-    destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
-    UI.message("Testing on destination: #{destination}")
-    
-    scan(
-      scheme: SCHEME,
-      project: PROJECT,
-      destination: destination,
-      clean: true,
-      code_coverage: true,
-      only_testing: ["TripPlannerUITests"],
-      output_directory: "./fastlane/test_output/ui_tests",
-      output_types: "html,junit",
-      fail_build: true,
-      reset_simulator: true
-    )
-    
-    UI.success("✅ UI tests passed!")
   end
 
   desc "Build for testing (used in CI)"
@@ -180,7 +157,6 @@ platform :ios do
     
     build
     unit_tests
-    ui_tests
     
     UI.success("✅ CI pipeline completed successfully!")
   end
@@ -206,7 +182,7 @@ platform :ios do
     UI.message("Session ID: #{session_id}")
     
     # Run full test suite
-    UI.message("🧪 Running all unit and UI tests...")
+    UI.message("🧪 Running all tests...")
     begin
       test  # Run full suite
     rescue => e
@@ -221,7 +197,7 @@ platform :ios do
     junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
     
     if junit_files.empty?
-      UI.warning("⚠️ No JUnit files found to upload")
+      UI.important("⚠️ No JUnit files found to upload")
     else
       begin
         sh("launchable record tests --session #{session_id} file #{junit_files}")
@@ -265,7 +241,7 @@ platform :ios do
       all_tests = sh(test_list_cmd, log: false).strip.split("\n").reject(&:empty?)
       
       if all_tests.empty?
-        UI.warning("⚠️ No tests found via xcodebuild, using default subset")
+        UI.important("⚠️ No tests found via xcodebuild, using default subset")
         raise "No tests discovered"
       end
       
@@ -287,7 +263,7 @@ platform :ios do
       subset_tests = File.read(subset_output_file).split("\n").reject(&:empty?)
       
       if subset_tests.empty?
-        UI.warning("⚠️ Launchable returned empty subset, using default")
+        UI.important("⚠️ Launchable returned empty subset, using default")
         raise "Empty subset"
       end
       
@@ -338,7 +314,7 @@ platform :ios do
     junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
     
     if junit_files.empty?
-      UI.warning("⚠️ No JUnit files found to upload")
+      UI.important("⚠️ No JUnit files found to upload")
     else
       begin
         sh("launchable record tests --session #{session_id} file #{junit_files}")

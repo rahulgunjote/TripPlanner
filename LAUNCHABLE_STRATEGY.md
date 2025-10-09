@@ -130,8 +130,8 @@ only_testing: ["TripPlannerTests"]
 **Rationale**:
 - Unit tests are fastest (~2-3 min)
 - Catch most logic errors
-- UI tests run on main anyway
 - Better than failing completely
+- Full suite runs on main anyway
 
 **Coverage**: ~60% of tests, ~40% faster
 
@@ -221,7 +221,7 @@ Accuracy: 95%+ bug detection
 ```ruby
 lane :launchable_train do
   # Run everything
-  test  # Unit tests + UI tests
+  test  # All tests
   
   # Upload to Launchable
   upload_results(session_id)
@@ -230,7 +230,6 @@ end
 
 **Runs**:
 - ✅ TripPlannerTests (Unit tests)
-- ✅ TripPlannerUITests (UI tests)
 
 ### Pull Requests
 ```ruby
@@ -249,9 +248,8 @@ end
 
 **Runs**:
 - ✅ TripPlannerTests (Unit tests) ~5-7 min
-- ❌ TripPlannerUITests (Skip for speed)
 
-**Fallback**: If unit tests fail, full suite runs
+**Fallback**: If tests fail, full suite runs
 
 ---
 
