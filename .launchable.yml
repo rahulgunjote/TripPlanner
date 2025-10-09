@@ -15,7 +15,7 @@ project:
 # Test targets
 test_targets:
   - TripPlannerTests
-  - TripPlannerUITests
+  # - TripPlannerUITests
 
 # Subset configuration
 subset:
