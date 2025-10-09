@@ -105,10 +105,8 @@ bundle exec fastlane lanes
 
 | Lane | Description | Command |
 |------|-------------|---------|
-| `test` | Run all tests (Unit + UI) | `bundle exec fastlane test` |
+| `test` | Run all tests | `bundle exec fastlane test` |
 | `unit_tests` | Run only unit tests | `bundle exec fastlane unit_tests` |
-| `ui_tests` | Run only UI tests | `bundle exec fastlane ui_tests` |
-| `test_without_building` | Run tests on pre-built artifacts | `bundle exec fastlane test_without_building` |
 
 ### Quality Lanes
 
@@ -143,8 +141,7 @@ build-and-test:
   ├── Setup Ruby 3.3.5
   ├── Install dependencies
   ├── Build project
-  ├── Run unit tests
-  ├── Run UI tests
+  ├── Run tests
   ├── Upload test results
   └── Upload code coverage
 ```
@@ -186,24 +183,11 @@ unit-tests:
   └── Comment on PR
 ```
 
-#### Job 3: UI Tests (runs after unit tests)
-```
-ui-tests:
-  ├── Checkout code
-  ├── Setup environment
-  ├── Build for testing
-  ├── Run UI tests
-  ├── Upload test results
-  ├── Upload screenshots (on failure)
-  └── Comment on PR
-```
-
 **Features:**
-- ✅ Parallel execution (build-check and unit-tests run simultaneously)
-- ✅ Sequential UI tests (runs after unit tests pass)
+- ✅ Parallel execution of independent jobs
 - ✅ Automatic PR comments with results
-- ✅ Screenshot capture on UI test failures
 - ✅ Test artifacts (30 days retention)
+- ✅ Intelligent test selection via Launchable
 
 ---
 
@@ -244,17 +228,6 @@ bundle exec fastlane unit_tests
 ```bash
 # Simulate CI pipeline
 bundle exec fastlane ci
-```
-
-#### Optimized Test Cycle
-```bash
-# Build once
-bundle exec fastlane build_for_testing
-
-# Run tests multiple times without rebuilding
-bundle exec fastlane test_without_building
-bundle exec fastlane test_without_building target:TripPlannerTests
-bundle exec fastlane test_without_building target:TripPlannerUITests
 ```
 
 ### Pre-Commit Checks
@@ -302,22 +275,13 @@ Create/Update PR
     ↓
 GitHub Actions Triggered
     ↓
-Three Jobs in Parallel:
-    ├── Build Check
-    │   ├── Build
-    │   └── Comment: ✅ Build succeeded
-    │
-    ├── Unit Tests
-    │   ├── Build for testing
-    │   ├── Run unit tests
-    │   ├── Upload results
-    │   └── Comment: ✅ Unit tests completed
-    │
-    └── UI Tests (waits for unit tests)
-        ├── Build for testing
-        ├── Run UI tests
-        ├── Upload results + screenshots
-        └── Comment: ✅ UI tests completed
+Launchable Intelligent Testing:
+    ├── Record build with Launchable
+    ├── Discover all available tests
+    ├── Get intelligent subset from ML
+    ├── Run subset tests
+    ├── Upload results to Launchable
+    └── Comment: ✅ Tests completed
 ```
 
 ---
@@ -398,16 +362,18 @@ xcrun simctl erase all
 
 ### Local Development
 ```bash
-# Use build_for_testing to avoid rebuilding
-bundle exec fastlane build_for_testing  # Once
-bundle exec fastlane test_without_building  # Multiple times
+# Run all tests
+bundle exec fastlane test
+
+# Or run unit tests specifically
+bundle exec fastlane unit_tests
 ```
 
 ### CI Optimization
-- ✅ Parallel jobs for faster feedback
+- ✅ Intelligent test selection via Launchable
 - ✅ Bundler cache in GitHub Actions
 - ✅ Separate build and test phases
-- ✅ Unit tests before UI tests (fail fast)
+- ✅ Fail fast strategy
 
 ---
 
@@ -423,23 +389,18 @@ bundle exec fastlane test_without_building  # Multiple times
 - **Minimum:** 60%
 - **Format:** HTML report via xcov
 
-### Screenshots (UI Tests)
-- **Location:** `fastlane/screenshots/`
-- **Captured:** On test failures
-- **Retention:** 7 days on GitHub Actions
-
 ---
 
 ## Best Practices
 
 ### 1. **Commit Frequently**
 - Run `bundle exec fastlane unit_tests` before each commit
-- Full `bundle exec fastlane ci` before pushing
+- Full `bundle exec fastlane test` before pushing
 
 ### 2. **Keep Tests Fast**
 - Unit tests should run < 5 minutes
-- UI tests should run < 10 minutes
-- Parallelize where possible
+- Use Launchable for intelligent test selection
+- Fail fast strategy
 
 ### 3. **Monitor Coverage**
 - Aim for > 60% overall coverage

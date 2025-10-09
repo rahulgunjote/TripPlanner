@@ -39,14 +39,6 @@ Run all tests (Unit + UI)
 
 Run unit tests only
 
-### ios ui_tests
-
-```sh
-[bundle exec] fastlane ios ui_tests
-```
-
-Run UI tests only
-
 ### ios build_for_testing
 
 ```sh
@@ -54,14 +46,6 @@ Run UI tests only
 ```
 
 Build for testing (used in CI)
-
-### ios test_without_building
-
-```sh
-[bundle exec] fastlane ios test_without_building
-```
-
-Run tests without building (used in CI)
 
 ### ios coverage
 
@@ -86,6 +70,46 @@ Lint Swift code
 ```
 
 Run full CI pipeline
+
+### ios launchable_record_build
+
+```sh
+[bundle exec] fastlane ios launchable_record_build
+```
+
+Record build for Launchable
+
+### ios launchable_train
+
+```sh
+[bundle exec] fastlane ios launchable_train
+```
+
+Run full test suite and upload to Launchable (for training ML models)
+
+### ios launchable_subset_test
+
+```sh
+[bundle exec] fastlane ios launchable_subset_test
+```
+
+Run tests with Launchable intelligent subset (for PRs)
+
+### ios launchable_test
+
+```sh
+[bundle exec] fastlane ios launchable_test
+```
+
+Run tests with Launchable (with fallback)
+
+### ios launchable_verify
+
+```sh
+[bundle exec] fastlane ios launchable_verify
+```
+
+Verify Launchable setup
 
 ### ios clean
 

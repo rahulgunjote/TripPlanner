@@ -1,0 +1,9 @@
+# Python dependencies for TripPlanner CI/CD
+
+# Launchable CLI for intelligent test selection
+launchable>=2.0.0
+
+# Optional: Other Python tools
+# pytest  # If you add Python tests in the future
+# pylint  # For Python code linting
+
