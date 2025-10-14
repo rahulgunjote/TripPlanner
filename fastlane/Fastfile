@@ -232,79 +232,198 @@ platform :ios do
     use_launchable_subset = false
     
     begin
-      # Step 1: Get list of all available tests
-      UI.message("📋 Discovering available tests...")
-      destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
+      # Step 1: Get list of all available tests from test files
+      UI.message("📋 Discovering available tests from test files...")
       
-      # Use xcodebuild to list all tests
-      test_list_cmd = "xcodebuild test -scheme #{SCHEME} -project #{PROJECT} -destination '#{destination}' -dry-run 2>&1 | grep 'Test Case' | sed 's/Test Case //' | sed 's/ started.//' | sort -u"
-      all_tests = sh(test_list_cmd, log: false).strip.split("\n").reject(&:empty?)
+      # Get project root directory (where .xcodeproj is)
+      project_root = File.dirname(File.expand_path(PROJECT))
+      UI.message("🔍 Project root: #{project_root}")
+      UI.message("🔍 Current directory: #{Dir.pwd}")
+      
+      # Find all test files - check multiple possible paths
+      # Fastlane usually runs from project root, but check multiple paths
+      search_paths = [
+        "./TripPlannerTests/**/*Tests.swift",  # From current directory
+        "../TripPlannerTests/**/*Tests.swift",  # From fastlane subdirectory
+        "#{project_root}/TripPlannerTests/**/*Tests.swift",  # From project root
+        "#{Dir.pwd}/TripPlannerTests/**/*Tests.swift"  # Current absolute path
+      ]
+      
+      test_files = []
+      search_paths.each do |pattern|
+        test_files = Dir.glob(pattern)
+        if !test_files.empty?
+          UI.message("✅ Found test files using pattern: #{pattern}")
+          break
+        end
+      end
+      
+      if test_files.empty?
+        UI.error("❌ No test files found!")
+        UI.message("Searched patterns:")
+        search_paths.each { |p| UI.message("  - #{p}") }
+        raise "No test files discovered"
+      end
+      
+      UI.message("� Found #{test_files.count} test files")
+      all_tests = []
+      tests_by_file = {}
+      
+      # Parse test files to extract test methods
+      test_files.each do |file|
+        content = File.read(file)
+        class_name = File.basename(file, ".swift")
+        file_tests = Set.new  # Use Set to avoid duplicates
+        
+        # Detect framework being used
+        uses_swift_testing = content.include?("import Testing")
+        uses_xctest = content.include?("import XCTest")
+        
+        if uses_swift_testing
+          # Swift Testing framework: Look for @Test annotations
+          # Pattern: @Test("description") func testName() or @Test func testName()
+          content.scan(/@Test(?:\([^)]*\))?\s+func\s+(\w+)\(\s*\)/).each do |match|
+            test_method = match[0]
+            test_id = "TripPlannerTests/#{class_name}/#{test_method}"
+            all_tests << test_id unless all_tests.include?(test_id)
+            file_tests.add(test_method)
+          end
+        end
+        
+        if uses_xctest
+          # XCTest framework: Look for test methods in classes
+          # Pattern: func testXXX() inside a class that inherits from XCTestCase
+          # First check if this file has XCTestCase
+          if content =~ /class\s+\w+\s*:\s*XCTestCase/
+            content.scan(/func (test\w+)\(\s*\)/).each do |match|
+              test_method = match[0]
+              test_id = "TripPlannerTests/#{class_name}/#{test_method}"
+              all_tests << test_id unless all_tests.include?(test_id)
+              file_tests.add(test_method)
+            end
+          end
+        end
+        
+        # If neither framework detected, try to find any test methods as fallback
+        if !uses_swift_testing && !uses_xctest
+          UI.important("⚠️ #{class_name}: No test framework detected, scanning for test methods...")
+          content.scan(/func (test\w+)\(\s*\)/).each do |match|
+            test_method = match[0]
+            test_id = "TripPlannerTests/#{class_name}/#{test_method}"
+            all_tests << test_id unless all_tests.include?(test_id)
+            file_tests.add(test_method)
+          end
+        end
+        
+        framework_info = []
+        framework_info << "Swift Testing" if uses_swift_testing
+        framework_info << "XCTest" if uses_xctest
+        framework_str = framework_info.empty? ? "Unknown" : framework_info.join(" + ")
+        
+        tests_by_file[class_name] = { count: file_tests.size, framework: framework_str }
+      end
       
       if all_tests.empty?
-        UI.important("⚠️ No tests found via xcodebuild, using default subset")
+        UI.error("⚠️ No test methods found in test files!")
+        UI.message("Files checked: #{tests_by_file.keys.join(', ')}")
         raise "No tests discovered"
       end
       
-      UI.message("📊 Found #{all_tests.count} total tests")
+      UI.message("📊 Found #{all_tests.count} total tests across #{test_files.count} test files")
+      tests_by_file.each do |file, info|
+        UI.message("   #{file}: #{info[:count]} tests (#{info[:framework]})")
+      end
       
       # Step 2: Write test list to file for Launchable
       test_list_file = "./launchable_test_list.txt"
       File.write(test_list_file, all_tests.join("\n"))
+      UI.message("📝 Test list written to #{test_list_file}")
       
       # Step 3: Get subset recommendation from Launchable
       UI.message("🧠 Requesting intelligent subset from Launchable ML...")
       subset_output_file = "./launchable_subset.txt"
       
       # Use launchable subset command (target 60% time reduction)
-      subset_cmd = "cat #{test_list_file} | launchable subset --target 40% --session #{session_id} file > #{subset_output_file}"
+      # Note: 'launchable subset file' reads from stdin, not from a file argument
+      subset_cmd = "cat #{test_list_file} | launchable subset --session #{session_id} --target 40% file > #{subset_output_file}"
       sh(subset_cmd)
       
       # Step 4: Parse Launchable's recommendations
-      subset_tests = File.read(subset_output_file).split("\n").reject(&:empty?)
+      subset_content = File.read(subset_output_file).strip
       
-      if subset_tests.empty?
+      if subset_content.empty?
         UI.important("⚠️ Launchable returned empty subset, using default")
         raise "Empty subset"
       end
       
+      # Extract test identifiers from subset
+      subset_tests_raw = subset_content.split("\n").reject(&:empty?)
+      
+      # Group tests by class for scan's only_testing parameter
+      # Convert "TripPlannerTests/ClassName/testMethod" to "TripPlannerTests/ClassName/testMethod"
+      subset_tests = subset_tests_raw.map { |t| t.strip }
+      
+      if subset_tests.empty?
+        UI.important("⚠️ No valid tests in subset, using default")
+        raise "Empty subset after parsing"
+      end
+      
       UI.success("✅ Launchable recommended #{subset_tests.count}/#{all_tests.count} tests (#{(subset_tests.count.to_f/all_tests.count*100).round}%)")
+      UI.message("🎯 Selected tests:")
+      subset_tests.first(10).each { |t| UI.message("   - #{t}") }
+      UI.message("   ... and #{subset_tests.count - 10} more") if subset_tests.count > 10
+      
       use_launchable_subset = true
       
     rescue => e
       UI.error("❌ Failed to get Launchable subset: #{e.message}")
-      UI.important("⚠️ Falling back to static subset (unit tests only)")
-      subset_tests = ["TripPlannerTests"]
+      UI.important("⚠️ Falling back to full test suite")
+      subset_tests = nil
       use_launchable_subset = false
     end
     
     # Step 5: Run the subset tests
     begin
-      if use_launchable_subset
-        UI.important("🎯 Running Launchable-recommended test subset")
-      else
-        UI.important("🎯 Running static unit test subset")
-      end
-      
       destination = "platform=iOS Simulator,name=#{SIMULATOR},OS=#{IOS_VERSION}"
       
-      scan(
-        scheme: SCHEME,
-        project: PROJECT,
-        destination: destination,
-        only_testing: subset_tests,
-        code_coverage: true,
-        output_directory: "./fastlane/test_output",
-        output_types: "html,junit",
-        fail_build: true,
-        reset_simulator: true
-      )
-      
-      UI.success("✅ Subset tests completed successfully")
+      if use_launchable_subset && !subset_tests.nil? && !subset_tests.empty?
+        UI.important("🎯 Running Launchable-recommended test subset (#{subset_tests.count} tests)")
+        
+        scan(
+          scheme: SCHEME,
+          project: PROJECT,
+          destination: destination,
+          only_testing: subset_tests,
+          code_coverage: true,
+          output_directory: "./fastlane/test_output",
+          output_types: "html,junit",
+          fail_build: true,
+          reset_simulator: true
+        )
+        
+        UI.success("✅ Intelligent subset tests completed successfully")
+      else
+        UI.important("🎯 Running full test suite (Launchable subset unavailable)")
+        
+        scan(
+          scheme: SCHEME,
+          project: PROJECT,
+          destination: destination,
+          clean: true,
+          code_coverage: true,
+          only_testing: ["TripPlannerTests"],
+          output_directory: "./fastlane/test_output",
+          output_types: "html,junit",
+          fail_build: true,
+          reset_simulator: true
+        )
+        
+        UI.success("✅ Full test suite completed successfully")
+      end
       
     rescue => e
-      UI.error("❌ Subset test failed: #{e.message}")
-      UI.important("⚠️ Falling back to full test suite...")
-      test
+      UI.error("❌ Test execution failed: #{e.message}")
+      raise e
     end
     
     # Step 6: Upload test results to Launchable

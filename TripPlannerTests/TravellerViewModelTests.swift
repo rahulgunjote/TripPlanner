@@ -217,6 +217,145 @@ struct TravellerViewModelTests {
         #expect(viewModel.validatePhoneNumber("abc") == false)
     }
     
+    // MARK: - Additional Validation Edge Cases
+    
+    @Test("Validate Email - edge cases")
+    func testValidateEmailEdgeCases() async throws {
+        // Valid edge cases
+        #expect(viewModel.validateEmail("test+tag@example.com") == true)
+        #expect(viewModel.validateEmail("user_name@example.com") == true)
+        #expect(viewModel.validateEmail("user-name@example.com") == true)
+        #expect(viewModel.validateEmail("123@example.com") == true)
+        
+        // Invalid edge cases
+        #expect(viewModel.validateEmail("user@") == false)
+        #expect(viewModel.validateEmail("@example.com") == false)
+        #expect(viewModel.validateEmail("user name@example.com") == false) // Space in email
+        #expect(viewModel.validateEmail("user@example") == false) // Missing TLD
+        #expect(viewModel.validateEmail("user@@example.com") == false) // Double @
+    }
+    
+    @Test("Validate Phone Number - edge cases with formatting")
+    func testValidatePhoneNumberEdgeCasesWithFormatting() async throws {
+        // Valid with various formats
+        #expect(viewModel.validatePhoneNumber("+1 (123) 456-7890") == true)
+        #expect(viewModel.validatePhoneNumber("+44 20 1234 5678") == true)
+        #expect(viewModel.validatePhoneNumber("123.456.7890") == true)
+        #expect(viewModel.validatePhoneNumber("1234567890123") == true) // More than 10 digits
+        
+        // Invalid - less than 10 digits
+        #expect(viewModel.validatePhoneNumber("123-456-78") == false) // Only 8 digits
+        #expect(viewModel.validatePhoneNumber("(123) 456") == false) // Only 6 digits
+    }
+    
+    @Test("Validate Traveller Name - edge cases with whitespace")
+    func testValidateTravellerNameEdgeCasesWhitespace() async throws {
+        // Should trim and validate
+        #expect(viewModel.validateTravellerName("  John Doe  ") == true)
+        #expect(viewModel.validateTravellerName("\tJohn Doe\n") == true)
+        
+        // Only whitespace should be invalid
+        #expect(viewModel.validateTravellerName("     ") == false)
+        #expect(viewModel.validateTravellerName("\t\n\r") == false)
+    }
+    
+    @Test("Validate Email - special characters")
+    func testValidateEmailSpecialCharacters() async throws {
+        // Valid special chars in local part
+        #expect(viewModel.validateEmail("user.name@example.com") == true)
+        #expect(viewModel.validateEmail("user_name@example.com") == true)
+        #expect(viewModel.validateEmail("user-name@example.com") == true)
+        #expect(viewModel.validateEmail("user+tag@example.com") == true)
+        
+        // Invalid special chars
+        #expect(viewModel.validateEmail("user!name@example.com") == false)
+        #expect(viewModel.validateEmail("user#name@example.com") == false)
+        #expect(viewModel.validateEmail("user$name@example.com") == false)
+    }
+    
+    @Test("Create Traveller - with invalid email should still create")
+    func testCreateTravellerWithInvalidEmailStillCreates() async throws {
+        // The ViewModel doesn't validate on creation, that's the UI's job
+        // This test ensures the ViewModel accepts any input (UI should validate)
+        let traveller = viewModel.createTraveller(
+            name: "John Doe",
+            email: "invalid-email", // Invalid email
+            phoneNumber: "123" // Invalid phone
+        )
+        
+        #expect(traveller.name == "John Doe")
+        #expect(traveller.email == "invalid-email")
+        #expect(traveller.phoneNumber == "123")
+    }
+    
+    @Test("Validation - comprehensive email test suite")
+    func testComprehensiveEmailValidation() async throws {
+        // Valid emails
+        let validEmails = [
+            "",
+            "simple@example.com",
+            "user.name@example.com",
+            "user_name@example.com",
+            "user-name@example.com",
+            "user+tag@example.com",
+            "123456@example.com",
+            "test@subdomain.example.com",
+            "test@example.co.uk"
+        ]
+        
+        for email in validEmails {
+            #expect(viewModel.validateEmail(email) == true, "Expected '\(email)' to be valid")
+        }
+        
+        // Invalid emails (based on our regex validation)
+        let invalidEmails = [
+            "invalid",
+            "@example.com",
+            "user@",
+            "user @example.com",
+            "user@example",
+            "user@@example.com"
+        ]
+        
+        for email in invalidEmails {
+            #expect(viewModel.validateEmail(email) == false, "Expected '\(email)' to be invalid")
+        }
+    }
+    
+    @Test("Validation - comprehensive phone test suite")
+    func testComprehensivePhoneValidation() async throws {
+        // Valid phone numbers
+        let validPhones = [
+            "",
+            "1234567890",
+            "123-456-7890",
+            "(123) 456-7890",
+            "+1 (123) 456-7890",
+            "+44 20 1234 5678",
+            "123.456.7890",
+            "1234567890123",
+            "+1-800-555-5555"
+        ]
+        
+        for phone in validPhones {
+            #expect(viewModel.validatePhoneNumber(phone) == true, "Expected '\(phone)' to be valid")
+        }
+        
+        // Invalid phone numbers
+        let invalidPhones = [
+            "123",
+            "12345",
+            "123456789", // Only 9 digits
+            "abc",
+            "abc-def-ghij",
+            "12-34-56"
+        ]
+        
+        for phone in invalidPhones {
+            #expect(viewModel.validatePhoneNumber(phone) == false, "Expected '\(phone)' to be invalid")
+        }
+    }
+    
     @Test("Is Duplicate Traveller Name - should detect duplicates")
     func testIsDuplicateTravellerName() async throws {
         viewModel.createTraveller(name: "John Doe")
