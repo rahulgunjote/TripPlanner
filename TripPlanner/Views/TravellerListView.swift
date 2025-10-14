@@ -286,9 +286,31 @@ struct AddTravellerView: View {
     @State private var email = ""
     @State private var phoneNumber = ""
     @State private var travellerType: TravellerType = .adult
+    @State private var showingValidationError = false
+    @State private var validationErrorMessage = ""
     
     private var travellerViewModel: TravellerViewModel {
         TravellerViewModel(modelContext: modelContext)
+    }
+    
+    private var isFormValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        (email.isEmpty || travellerViewModel.validateEmail(email)) &&
+        (phoneNumber.isEmpty || travellerViewModel.validatePhoneNumber(phoneNumber))
+    }
+    
+    private var emailValidationMessage: String? {
+        if !email.isEmpty && !travellerViewModel.validateEmail(email) {
+            return "Invalid email format"
+        }
+        return nil
+    }
+    
+    private var phoneValidationMessage: String? {
+        if !phoneNumber.isEmpty && !travellerViewModel.validatePhoneNumber(phoneNumber) {
+            return "Phone number must be at least 10 digits"
+        }
+        return nil
     }
     
     var body: some View {
@@ -303,12 +325,29 @@ struct AddTravellerView: View {
                     }
                     .pickerStyle(.segmented)
                     
-                    TextField("Email", text: $email)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Email (optional)", text: $email)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        
+                        if let message = emailValidationMessage {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
                     
-                    TextField("Phone Number", text: $phoneNumber)
-                        .keyboardType(.phonePad)
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Phone Number (optional)", text: $phoneNumber)
+                            .keyboardType(.phonePad)
+                        
+                        if let message = phoneValidationMessage {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
                 }
             }
             .navigationTitle("Add Traveller")
@@ -324,13 +363,37 @@ struct AddTravellerView: View {
                     Button("Add") {
                         addTraveller()
                     }
-                    .disabled(name.isEmpty)
+                    .disabled(!isFormValid)
                 }
+            }
+            .alert("Validation Error", isPresented: $showingValidationError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(validationErrorMessage)
             }
         }
     }
     
     private func addTraveller() {
+        // Final validation before saving
+        guard travellerViewModel.validateTravellerName(name) else {
+            validationErrorMessage = "Please enter a valid name"
+            showingValidationError = true
+            return
+        }
+        
+        guard email.isEmpty || travellerViewModel.validateEmail(email) else {
+            validationErrorMessage = "Please enter a valid email address"
+            showingValidationError = true
+            return
+        }
+        
+        guard phoneNumber.isEmpty || travellerViewModel.validatePhoneNumber(phoneNumber) else {
+            validationErrorMessage = "Please enter a valid phone number (at least 10 digits)"
+            showingValidationError = true
+            return
+        }
+        
         _ = travellerViewModel.createTraveller(
             name: name,
             email: email,
@@ -351,6 +414,8 @@ struct EditTravellerView: View {
     @State private var email: String
     @State private var phoneNumber: String
     @State private var travellerType: TravellerType
+    @State private var showingValidationError = false
+    @State private var validationErrorMessage = ""
     
     private var travellerViewModel: TravellerViewModel {
         TravellerViewModel(modelContext: modelContext)
@@ -362,6 +427,26 @@ struct EditTravellerView: View {
         _email = State(initialValue: traveller.email)
         _phoneNumber = State(initialValue: traveller.phoneNumber)
         _travellerType = State(initialValue: traveller.travellerType)
+    }
+    
+    private var isFormValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        (email.isEmpty || travellerViewModel.validateEmail(email)) &&
+        (phoneNumber.isEmpty || travellerViewModel.validatePhoneNumber(phoneNumber))
+    }
+    
+    private var emailValidationMessage: String? {
+        if !email.isEmpty && !travellerViewModel.validateEmail(email) {
+            return "Invalid email format"
+        }
+        return nil
+    }
+    
+    private var phoneValidationMessage: String? {
+        if !phoneNumber.isEmpty && !travellerViewModel.validatePhoneNumber(phoneNumber) {
+            return "Phone number must be at least 10 digits"
+        }
+        return nil
     }
     
     var body: some View {
@@ -376,12 +461,29 @@ struct EditTravellerView: View {
                     }
                     .pickerStyle(.segmented)
                     
-                    TextField("Email", text: $email)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Email (optional)", text: $email)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        
+                        if let message = emailValidationMessage {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
                     
-                    TextField("Phone Number", text: $phoneNumber)
-                        .keyboardType(.phonePad)
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Phone Number (optional)", text: $phoneNumber)
+                            .keyboardType(.phonePad)
+                        
+                        if let message = phoneValidationMessage {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
                 }
                 
                 Section {
@@ -409,13 +511,37 @@ struct EditTravellerView: View {
                     Button("Save") {
                         saveChanges()
                     }
-                    .disabled(name.isEmpty)
+                    .disabled(!isFormValid)
                 }
+            }
+            .alert("Validation Error", isPresented: $showingValidationError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(validationErrorMessage)
             }
         }
     }
     
     private func saveChanges() {
+        // Final validation before saving
+        guard travellerViewModel.validateTravellerName(name) else {
+            validationErrorMessage = "Please enter a valid name"
+            showingValidationError = true
+            return
+        }
+        
+        guard email.isEmpty || travellerViewModel.validateEmail(email) else {
+            validationErrorMessage = "Please enter a valid email address"
+            showingValidationError = true
+            return
+        }
+        
+        guard phoneNumber.isEmpty || travellerViewModel.validatePhoneNumber(phoneNumber) else {
+            validationErrorMessage = "Please enter a valid phone number (at least 10 digits)"
+            showingValidationError = true
+            return
+        }
+        
         travellerViewModel.updateTraveller(
             traveller: traveller,
             name: name,
