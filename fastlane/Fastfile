@@ -193,12 +193,42 @@ platform :ios do
     # Record test results
     UI.message("📤 Uploading test results to Launchable for training...")
     
-    # Find JUnit XML files
-    junit_files = Dir.glob("./fastlane/test_output/**/*.junit")
+    # Debug: Show current directory and check what files exist
+    UI.message("🔍 Current working directory: #{Dir.pwd}")
+    
+    # Try multiple path patterns
+    search_patterns = [
+      "./fastlane/test_output/**/*.junit",
+      "fastlane/test_output/**/*.junit",
+      "#{Dir.pwd}/fastlane/test_output/**/*.junit",
+      "./test_output/**/*.junit"
+    ]
+    
+    junit_files = []
+    search_patterns.each do |pattern|
+      files = Dir.glob(pattern)
+      if !files.empty?
+        UI.message("✅ Found files with pattern: #{pattern}")
+        junit_files = files
+        break
+      end
+    end
     
     if junit_files.empty?
       UI.important("⚠️ No JUnit files found to upload")
-      UI.message("Searched path: ./fastlane/test_output/**/*.junit")
+      UI.message("Searched patterns:")
+      search_patterns.each { |p| UI.message("  - #{p}") }
+      
+      # List what files DO exist in test_output
+      if Dir.exist?("./fastlane/test_output")
+        UI.message("Files in ./fastlane/test_output:")
+        Dir.glob("./fastlane/test_output/**/*").each { |f| UI.message("  - #{f}") }
+      elsif Dir.exist?("fastlane/test_output")
+        UI.message("Files in fastlane/test_output:")
+        Dir.glob("fastlane/test_output/**/*").each { |f| UI.message("  - #{f}") }
+      else
+        UI.message("⚠️ test_output directory doesn't exist")
+      end
     else
       UI.message("📁 Found #{junit_files.count} JUnit file(s):")
       junit_files.each { |f| UI.message("   - #{f}") }
