@@ -236,7 +236,7 @@ platform :ios do
       begin
         # Upload each JUnit file to Launchable
         junit_files.each do |junit_file|
-          sh("launchable record tests --session #{session_id} junit '#{junit_file}'")
+          sh("launchable record tests --session #{session_id} xctest '#{junit_file}'")
         end
         UI.success("✅ Test results uploaded to Launchable")
         UI.message("📈 This data will be used to train ML models for intelligent test selection")
@@ -479,7 +479,7 @@ platform :ios do
       begin
         # Upload each JUnit file to Launchable
         junit_files.each do |junit_file|
-          sh("launchable record tests --session #{session_id} junit '#{junit_file}'")
+          sh("launchable record tests --session #{session_id} xctest '#{junit_file}'")
         end
         UI.success("✅ Test results uploaded to Launchable")
         
