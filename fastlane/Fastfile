@@ -194,13 +194,20 @@ platform :ios do
     UI.message("📤 Uploading test results to Launchable for training...")
     
     # Find JUnit XML files
-    junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
+    junit_files = Dir.glob("./fastlane/test_output/**/*.junit")
     
     if junit_files.empty?
       UI.important("⚠️ No JUnit files found to upload")
+      UI.message("Searched path: ./fastlane/test_output/**/*.junit")
     else
+      UI.message("📁 Found #{junit_files.count} JUnit file(s):")
+      junit_files.each { |f| UI.message("   - #{f}") }
+      
       begin
-        sh("launchable record tests --session #{session_id} file #{junit_files}")
+        # Upload each JUnit file to Launchable
+        junit_files.each do |junit_file|
+          sh("launchable record tests --session #{session_id} junit '#{junit_file}'")
+        end
         UI.success("✅ Test results uploaded to Launchable")
         UI.message("📈 This data will be used to train ML models for intelligent test selection")
       rescue => e
@@ -430,13 +437,20 @@ platform :ios do
     UI.message("📤 Uploading test results to Launchable...")
     
     # Find JUnit XML files
-    junit_files = Dir.glob("./fastlane/test_output/**/*.junit").join(" ")
+    junit_files = Dir.glob("./fastlane/test_output/**/*.junit")
     
     if junit_files.empty?
       UI.important("⚠️ No JUnit files found to upload")
+      UI.message("Searched path: ./fastlane/test_output/**/*.junit")
     else
+      UI.message("📁 Found #{junit_files.count} JUnit file(s):")
+      junit_files.each { |f| UI.message("   - #{f}") }
+      
       begin
-        sh("launchable record tests --session #{session_id} file #{junit_files}")
+        # Upload each JUnit file to Launchable
+        junit_files.each do |junit_file|
+          sh("launchable record tests --session #{session_id} junit '#{junit_file}'")
+        end
         UI.success("✅ Test results uploaded to Launchable")
         
         if use_launchable_subset
